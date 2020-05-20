@@ -1,4 +1,4 @@
-/// <reference path="/Users/bmihaiciuc/OneDrive - PTC/BMCoreUI/ui/BMCoreUI/BMCoreUI.d.ts"/>
+/// <reference path="../../BMCoreUI/build/ui/BMCoreUI/BMCoreUI.d.ts"/>
 
 import { ThingworxRuntimeWidget, TWService, TWProperty } from 'typescriptwebpacksupport'
 
@@ -114,7 +114,7 @@ export class BMMenuWidget extends TWRuntimeWidget {
             if (!states || !states.length) return;
 
             for (const state of states) {
-                if (state.name) items.push(BMMenuItem.menuItemWithName(state.name));
+                if (state.displayString) items.push(BMMenuItem.menuItemWithName(state.displayString));
             }
 
             // Also initialize the menu
@@ -125,6 +125,10 @@ export class BMMenuWidget extends TWRuntimeWidget {
 
         this.contextMenuHandler = event => {
             if (!this.targetWidget) return;
+
+            if (event.type == 'touchstart') {
+                return this.menu.openFromNode(this.targetWidget.jqElement[0]);
+            }
 
             const frame = BMRectMakeWithNodeFrame(this.targetWidget.jqElement[0]);
             const point = BMPointMake();
@@ -159,7 +163,9 @@ export class BMMenuWidget extends TWRuntimeWidget {
             this.targetWidget = this;
         }
 
-        if (this.targetWidget) this.targetWidget.jqElement[0].addEventListener('contextmenu', this.contextMenuHandler);
+        if (this.targetWidget) {
+            this.targetWidget.jqElement[0].addEventListener('contextmenu', this.contextMenuHandler);
+        }
     }
 
     /**
