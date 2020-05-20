@@ -5,7 +5,7 @@
         "noImplicitAny": false,
         "module": "esnext",
         "moduleResolution": "node",
-        "target": "es5",
+        "target": "esnext",
         "experimentalDecorators": true,
         "lib": [
             "es2015",
