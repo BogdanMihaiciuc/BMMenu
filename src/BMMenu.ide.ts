@@ -106,7 +106,7 @@ class BMMenuWidget extends TWComposerWidget {
 		// Extract the state names from the menu definition
         var menuDefinition: any[] = [];
         for (const definition of stateDefinition) {
-			if (definition.name) menuDefinition.push(definition.name);
+			if (definition.displayString) menuDefinition.push(definition.displayString);
         }
 
 		this.setProperty('_menuDefinition', JSON.stringify(menuDefinition));
