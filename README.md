@@ -1,3 +1,7 @@
+🛑 **Note: If you are planning to use this widget in Thingworx 8.5 or newer, strongly consider using [Core UI Widgets](https://github.com/ptc-iot-sharing/BMCoreUIWidgets) instead.**
+
+This repository contains the standalone development version of the `BMMenu` widget and is the source from which the widget is merged into core ui widgets.
+
 # Intro
 
 A widget that shows a popup menu when the user right-clicks a section of the mashup.
