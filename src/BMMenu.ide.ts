@@ -28,7 +28,7 @@ class BMMenuWidget extends TWComposerWidget {
     @property ('STRING') targetWidget: string;
 
     @description('One or more custom classes to add to the menu DOM node.')
-    @property ('STRING', defaultValue('')) menuClass: string;
+    @property ('STRING', defaultValue(''), bindingTarget) menuClass: string;
 
     @description('Triggered when the user clicks on a menu item.')
     @event menuDidSelectItem;
