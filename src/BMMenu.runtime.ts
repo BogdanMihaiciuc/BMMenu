@@ -87,7 +87,9 @@ export class BMMenuWidget extends TWRuntimeWidget {
     /**
      * An optional list of custom classes to add to the menu DOM node.
      */
-    @TWProperty ('menuClass') menuClass: string;
+    @TWProperty ('menuClass') set menuClass(CSSClass: string) {
+        if (this.menu) this.menu.CSSClass = CSSClass;
+    }
 
     /**
      * The target widget, if the target kind is a widget reference and the widget could be found.
