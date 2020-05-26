@@ -1,6 +1,6 @@
 {
     "name": "BMMenu",
-    "version": "1.0.2",
+    "version": "2.6.0",
     "description": "Displays a popup menu.",
     "thingworxServer": "http://localhost:8016",
     "thingworxUser": "Administrator",

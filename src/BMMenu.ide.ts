@@ -27,6 +27,9 @@ class BMMenuWidget extends TWComposerWidget {
     @description('When the target is set to another widget, this represents the display name of the widget on which right-clicking will trigger the popup menu.')
     @property ('STRING') targetWidget: string;
 
+    @description('One or more custom classes to add to the menu DOM node.')
+    @property ('STRING', defaultValue('')) menuClass: string;
+
     @description('Triggered when the user clicks on a menu item.')
     @event menuDidSelectItem;
 

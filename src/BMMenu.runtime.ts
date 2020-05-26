@@ -68,6 +68,7 @@ export class BMMenuWidget extends TWRuntimeWidget {
         if (!items.length) return;
 
         this.menu = BMMenu.menuWithItems(items);
+        this.menu.CSSClass = this.menuClass;
         this.menu.delegate = this;
     }
 
@@ -82,6 +83,11 @@ export class BMMenuWidget extends TWRuntimeWidget {
     @TWProperty ('targetWidget') targetWidgetReference: string;
 
     @TWProperty ('selectedMenuItem') selectedMenuItem: string;
+
+    /**
+     * An optional list of custom classes to add to the menu DOM node.
+     */
+    @TWProperty ('menuClass') menuClass: string;
 
     /**
      * The target widget, if the target kind is a widget reference and the widget could be found.
@@ -119,6 +125,7 @@ export class BMMenuWidget extends TWRuntimeWidget {
 
             // Also initialize the menu
             this.menu = BMMenu.menuWithItems(items);
+            this.menu.CSSClass = this.menuClass;
 
             this.menu.delegate = this;
         }
