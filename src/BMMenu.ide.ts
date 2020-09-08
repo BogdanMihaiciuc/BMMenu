@@ -1,5 +1,5 @@
 // automatically import the css file
-import { ThingworxComposerWidget, TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, baseTypeInfotableProperty, event, service, nonEditable, bindingSource, hidden } from 'typescriptwebpacksupport';
+import { ThingworxComposerWidget, TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, baseTypeInfotableProperty, event, service, nonEditable, bindingSource, hidden } from 'typescriptwebpacksupport/widgetidesupport';
 
 @description('Displays a popup menu when the user right-clicks on a region or a different widget.')
 @TWWidgetDefinition('Popup Menu', autoResizable)
@@ -42,7 +42,7 @@ class BMMenuWidget extends TWComposerWidget {
     @service showMenu;
 
     widgetIconUrl(): string {
-        return require('./images/icon.png');
+        return require('./images/icon.png').default;
     }
 
     widgetProperties(): TWWidgetProperties {
