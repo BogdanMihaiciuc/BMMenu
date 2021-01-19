@@ -1,3 +1,7 @@
+# 2.6.7
+
+Updated dependecies.
+
 # 2.6
 
 Added support for specifying custom classes for the menu DOM node.

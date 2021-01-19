@@ -52,6 +52,6 @@
         "zip-webpack-plugin": "^3.0.0"
     },
     "dependencies": {
-        "typescriptwebpacksupport": "^2.0.7"
+        "typescriptwebpacksupport": "^2.0.9"
     }
 }
