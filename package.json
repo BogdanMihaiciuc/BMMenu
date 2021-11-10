@@ -1,6 +1,6 @@
 {
     "name": "BMMenu",
-    "version": "2.6.7",
+    "version": "2.8.3",
     "description": "Displays a popup menu.",
     "thingworxServer": "http://localhost:8016",
     "thingworxUser": "Administrator",
@@ -18,7 +18,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build": "webpack --mode production",
-        "buildDev": "webpack --mode development",
+        "buildDebug": "webpack --mode development",
         "watch": "webpack --watch --mode development",
         "server": "webpack-dev-server --open",
         "upload": "webpack --mode development --env.upload",
