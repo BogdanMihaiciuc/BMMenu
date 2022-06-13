@@ -34,6 +34,28 @@ export enum BMMenuWidgetTargetKind {
     Reference = 'reference'
 }
 
+
+/**
+ * An enum that contains that describe how a menu should display.
+ */
+ enum BMMenuDisplayMode {
+    /**
+     * Indicates that the kind of menu is determined by the
+     * kind of event that triggers it.
+     */
+    Auto = 'auto',
+
+    /**
+     * Indicates that the menu will always appear as a desktop menu.
+     */
+    Mouse = 'mouse',
+
+    /**
+     * Indicates that the menu will always appear as a touch menu.
+     */
+    Touch = 'touch'
+}
+
 @ThingworxRuntimeWidget
 export class BMMenuWidget extends TWRuntimeWidget {
 
@@ -53,23 +75,49 @@ export class BMMenuWidget extends TWRuntimeWidget {
     @TWProperty ('nameField') nameField: string;
 
     /**
+     * Represents the infotable field to use as the submenu when the data source is an infotable.
+     */
+    @TWProperty ('submenuField') submenuField: string;
+
+    /**
+     * Creates and returns a menu initialized with the values in the specified infotable.
+     * @param menuInfotable         The infotable from which to create a menu.
+     * @returns                     A menu, or `undefined` if a menu could not be created.
+     *                              from the specified infotable.
+     */
+    private _menuWithInfotable(menuInfotable: TWInfotable | undefined): BMMenu | undefined {
+        // If the infotable is blank return undefined
+        if (!menuInfotable) return undefined;
+
+        // Recreate the menu whenever this infotable gets updated
+        const items = menuInfotable.rows.map(e => {
+            let submenu: BMMenu | undefined;
+            
+            // If the item has a submenu, create a menu for it
+            if (e[this.submenuField]) {
+                submenu = this._menuWithInfotable(e[this.submenuField]);
+            }
+
+            return BMMenuItem.menuItemWithName(e[this.nameField], {submenu})
+        });
+
+        // Return undefined if the menu would be blacnk
+        if (!items.length) return undefined;
+
+        // Create and configure the menu
+        const menu = BMMenu.menuWithItems(items);
+        menu.CSSClass = this.menuClass;
+        menu.delegate = this;
+
+        return menu;
+    }
+
+    /**
      * The menu infotable.
      */
     @TWProperty('menu') 
     set menuInfotable(menuInfotable: TWInfotable) {
-        this.menu = undefined;
-
-        // Clear out the menu if the infotable is blank
-        if (!menuInfotable) return;
-
-        // Recreate the menu whenever this infotable gets updated
-        const items = menuInfotable.rows.map(e => BMMenuItem.menuItemWithName(e[this.nameField]));
-
-        if (!items.length) return;
-
-        this.menu = BMMenu.menuWithItems(items);
-        this.menu.CSSClass = this.menuClass;
-        this.menu.delegate = this;
+        this.menu = this._menuWithInfotable(menuInfotable);
     }
 
     /**
@@ -92,6 +140,11 @@ export class BMMenuWidget extends TWRuntimeWidget {
     }
 
     /**
+     * Controls whether the menu appears as a desktop menu or a touch menu.
+     */
+    @TWProperty ('displayMode') displayMode?: BMMenuDisplayMode;
+
+    /**
      * The target widget, if the target kind is a widget reference and the widget could be found.
      */
     targetWidget?: TWWidget;
@@ -105,7 +158,7 @@ export class BMMenuWidget extends TWRuntimeWidget {
     /**
      * The context menu handler to attach to widgets.
      */
-    contextMenuHandler: (event?: MouseEvent) => void;
+    contextMenuHandler: (event?: MouseEvent | TouchEvent) => void;
 
     renderHtml(): string {
         return '<div class="widget-content BMMenuWidget"></div>';
@@ -132,10 +185,33 @@ export class BMMenuWidget extends TWRuntimeWidget {
             this.menu.delegate = this;
         }
 
+        /**
+         * Tests whether the specified event is a touch event, for the purposes of
+         * determining if a menu should open from the target widget or the event's location.
+         * @param event     The event to test.
+         * @returns         `true` if the event is a `TouchEvent`, false otherwise.
+         */
+        function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent {
+            return event.type == 'touchstart';
+        }
+
         this.contextMenuHandler = event => {
             if (!this.targetWidget) return;
 
-            if (event.type == 'touchstart') {
+            // Use the display mode to determine which kind of menu to display
+            const displayMode = this.displayMode || BMMenuDisplayMode.Auto;
+
+            // Prevent the regular context menu from appearing
+            if (event) {
+                event.preventDefault();
+            }
+
+            if (
+                ((event.type != 'contextmenu') && displayMode == BMMenuDisplayMode.Auto) || 
+                displayMode == BMMenuDisplayMode.Touch
+            ) {
+                // Show a touch menu if originating from a touch event and the display mode is auto
+                // or if the display mode is set to touch
                 return this.menu.openFromNode(this.targetWidget.jqElement[0]);
             }
 
@@ -143,16 +219,25 @@ export class BMMenuWidget extends TWRuntimeWidget {
             const point = BMPointMake();
 
             if (event) {
-                event.preventDefault();
-                point.x = event.pageX;
-                point.y = event.pageY;
+                // Get the event's coordinates based on the kind of event
+                if (isTouchEvent(event)) {
+                    point.x = event.changedTouches[0].clientX;
+                    point.y = event.changedTouches[0].clientY;
+                }
+                else {
+                    point.x = event.clientX;
+                    point.y = event.clientY;
+                }
             }
             else {
+                // If an event isn't available (e.g. due to being triggered programatically)
+                // use the anchor's frame
                 point.x = frame.bottom;
                 point.y = frame.bottom;
             }
 
             if (this.menu) {
+                // If the menu didn't open as a touch menu, it should open as a mouse menu
                 this.menu.openAtPoint(point);
             }
         }
@@ -173,7 +258,141 @@ export class BMMenuWidget extends TWRuntimeWidget {
         }
 
         if (this.targetWidget) {
-            this.targetWidget.jqElement[0].addEventListener('contextmenu', this.contextMenuHandler);
+            // Add a context menu handler, if right click triggering is enabled
+            if (this.getProperty('triggerOnRightClick', YES)) {
+                this.targetWidget.jqElement[0].addEventListener('contextmenu', this.contextMenuHandler);
+            }
+
+            // The touch identifier tracked to identify long taps
+            let touchIdentifier: number | undefined;
+
+            // A timeout used to trigger the long tap
+            let timeout: number | undefined;
+
+            // The starting position of the touch event sequence
+            let originalPosition = BMPointMake();
+
+            // Starts the timeout that triggers the long tap
+            const beginTimeout = (event: TouchEvent | MouseEvent) => {
+                timeout = window.setTimeout(() => {
+                    timeout = undefined;
+                    touchIdentifier = undefined;
+
+                    event.preventDefault();
+
+                    this.contextMenuHandler(event);
+                }, _BMCollectionViewLongClickDelay);
+            }
+
+            // Cancels the long tap timeout, preventing the event from occurring
+            const cancelTimeout = () => {
+                window.clearTimeout(timeout);
+                timeout = undefined;
+                touchIdentifier = undefined;
+            }
+
+            // Verifies if the pointer moved too much and cancels the timeout if it did
+            const verifyPointerMovement = (point: BMPoint) => {
+                if (Math.abs(point.x - originalPosition.x) > _BMCollectionViewClickSlopeThreshold ||
+		    	    Math.abs(point.y - originalPosition.y) > _BMCollectionViewClickSlopeThreshold) {
+                    // If the touch pointer moves too much, cancel the long tap
+				    cancelTimeout();
+                }
+            }
+
+            const targetNode = this.targetWidget.jqElement[0];
+
+            // Set up the touch handlers allowing menus to be opened on touch devices
+            targetNode.addEventListener('touchstart', event => {
+                // Only track a single touch
+                if (touchIdentifier) return;
+
+                // Use the first touch point to track this long tap
+                touchIdentifier = event.changedTouches[0].identifier;
+
+                // Set the original position of the event to test if the touch pointer
+                // moves too much to trigger the long tap
+                originalPosition.x = event.touches[0].pageX || 0;
+                originalPosition.y = event.touches[0].pageY || 0;
+
+                // Set a timeout to trigger the long tap after a sufficient delay, as long as the
+                // touch pointer doesn't move significantly
+                beginTimeout(event);
+            });
+
+            targetNode.addEventListener('touchmove', event => {
+                // Don't process if there is no tracked touch
+                if (!touchIdentifier) return;
+
+                // Ensure that the tracked touch did change
+			    let i = 0;
+                let x: number, y: number;
+			    for (; i < event.changedTouches.length; i++) { 
+				    if (event.changedTouches[i].identifier == touchIdentifier) {
+					    x = event.changedTouches[i].pageX;
+					    y = event.changedTouches[i].pageY;
+					    break;
+				    }
+				} 
+				
+			    // If the tracked touch did not change, ignore this touchmove event
+			    if (i == event.changedTouches.length) return;
+
+                // Verify if the pointer exceeded the slope threshold
+                verifyPointerMovement(BMPointMake(x, y));
+            });
+
+            let touchCancelAndEndHandler = (event: TouchEvent) => {
+                // Don't process if there is no tracked touch
+                if (!touchIdentifier) return;
+
+                // Ensure that the tracked touch did change
+			    let i = 0;
+                let x: number, y: number;
+			    for (; i < event.changedTouches.length; i++) { 
+				    if (event.changedTouches[i].identifier == touchIdentifier) {
+					    x = event.changedTouches[i].pageX;
+					    y = event.changedTouches[i].pageY;
+					    break;
+				    }
+				} 
+				
+			    // If the tracked touch did not change, ignore this touchcancel or touchend event
+			    if (i == event.changedTouches.length) return;
+
+                // Otherwise prevent the long tap from triggering
+                cancelTimeout();
+            };
+
+            targetNode.addEventListener('touchcancel', touchCancelAndEndHandler);
+            targetNode.addEventListener('touchend', touchCancelAndEndHandler);
+
+            // If long click is enabled, set up handlers to track it in a similar manner to touch events
+            if (this.getProperty('triggerOnLongClick', NO)) {
+                targetNode.addEventListener('mousedown', event => {
+                    // Set the original position of the event to test if the touch pointer
+                    // moves too much to trigger the long tap
+                    originalPosition.x = event.clientX || 0;
+                    originalPosition.y = event.clientY || 0;
+
+                    // Only handle left clicks
+                    if (event.button != 0) return;
+
+                    beginTimeout(event);
+
+                    // Attach a mousemove listener to verify if the movement limit is exceeded
+                    const mouseMoveListener = (event: MouseEvent) => {
+                        verifyPointerMovement(BMPointMake(event.clientX, event.clientY));
+                    }
+
+                    window.addEventListener('mousemove', mouseMoveListener);
+                    window.addEventListener('mouseup', event => {
+                        // When the mouse button is released, cancel the long click timeout if it hasn't triggered
+                        cancelTimeout();
+                        window.removeEventListener('mousemove', mouseMoveListener);
+                    }, {once: YES});
+                });
+            }
         }
     }
 

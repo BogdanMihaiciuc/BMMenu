@@ -1,5 +1,35 @@
 // automatically import the css file
-import { ThingworxComposerWidget, TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, baseTypeInfotableProperty, event, service, nonEditable, bindingSource, hidden } from 'typescriptwebpacksupport/widgetidesupport';
+import { TWWidgetDefinition, description, autoResizable, property, defaultValue, bindingTarget, event, service, nonEditable, bindingSource, hidden, sourcePropertyName, selectOptions } from 'typescriptwebpacksupport/widgetidesupport';
+
+/**
+ * An enum that contains that describe how a menu should display.
+ */
+enum BMMenuDisplayMode {
+    /**
+     * Indicates that the kind of menu is determined by the
+     * kind of event that triggers it.
+     */
+    Auto = 'auto',
+
+    /**
+     * Indicates that the menu will always appear as a desktop menu.
+     */
+    Mouse = 'mouse',
+
+    /**
+     * Indicates that the menu will always appear as a touch menu.
+     */
+    Touch = 'touch'
+}
+
+/**
+ * An array that contains the menu display options.
+ */
+const BMMenuDisplayOptions = [
+    {text: 'Automatic', value: BMMenuDisplayMode.Auto},
+    {text: 'Mouse', value: BMMenuDisplayMode.Mouse},
+    {text: 'Touch', value: BMMenuDisplayMode.Touch},
+];
 
 @description('Displays a popup menu when the user right-clicks on a region or a different widget.')
 @TWWidgetDefinition('Popup Menu', autoResizable)
@@ -19,7 +49,10 @@ class BMMenuWidget extends TWComposerWidget {
     @property ('INFOTABLE', bindingTarget) menu: any;
 
     @description('The field that represents the name of the menu entry.')
-    @property ('FIELDNAME', baseTypeInfotableProperty('menu')) nameField: string;
+    @property ('FIELDNAME', sourcePropertyName('menu')) nameField: string;
+
+    @description('The field that represents a submenu that can be opened for a menu item.')
+    @property ('FIELDNAME', sourcePropertyName('menu')) submenuField: string;
 
     @description('Controls what area triggers the popup menu on right click.')
     @property ('STRING', defaultValue('thisWidget')) targetKind: string;
@@ -29,6 +62,15 @@ class BMMenuWidget extends TWComposerWidget {
 
     @description('One or more custom classes to add to the menu DOM node.')
     @property ('STRING', defaultValue(''), bindingTarget) menuClass: string;
+
+    @description('Controls how this menu appears. Automatic will choose the menu type based on the input method used to trigger it.')
+    @property ('STRING', selectOptions(BMMenuDisplayOptions), defaultValue(BMMenuDisplayMode.Auto)) displayMode: string;
+
+    @description('Controls whether long clicks should open the menu.')
+    @property ('BOOLEAN', defaultValue(NO)) triggerOnLongClick: boolean;
+
+    @description('Controls whether right clicks should open the menu.')
+    @property ('BOOLEAN', defaultValue(YES)) triggerOnRightClick: boolean;
 
     @description('Triggered when the user clicks on a menu item.')
     @event menuDidSelectItem;
