@@ -34,10 +34,11 @@ const BMMenuDisplayOptions = [
 @description('Displays a popup menu when the user right-clicks on a region or a different widget.')
 @TWWidgetDefinition('Popup Menu', autoResizable)
 class BMMenuWidget extends TWComposerWidget {
+    // @override - TWComposerWidget
+    @property('NUMBER', defaultValue(160)) Width: number;
 
-    @property ('NUMBER', defaultValue(90)) Width: number;
-
-    @property ('NUMBER', defaultValue(30)) Height: number;
+    // @override - TWComposerWidget
+    @property('NUMBER', defaultValue(48)) Height: number;
 
     @description('The data source kind to use.')
     @property ('STRING', defaultValue('state')) dataSourceKind: string;
@@ -53,6 +54,9 @@ class BMMenuWidget extends TWComposerWidget {
 
     @description('The field that represents a submenu that can be opened for a menu item.')
     @property ('FIELDNAME', sourcePropertyName('menu')) submenuField: string;
+
+    @description('The field that represents a CSS class that should be added to the menu item.')
+    @property ('FIELDNAME', sourcePropertyName('menu')) classField: string;
 
     @description('Controls what area triggers the popup menu on right click.')
     @property ('STRING', defaultValue('thisWidget')) targetKind: string;
@@ -83,8 +87,10 @@ class BMMenuWidget extends TWComposerWidget {
     @description('Should be invoked to show the menu. It will be shown from the bottom-right corner of its target.')
     @service showMenu;
 
+    largeIcon: string = require('./images/MenuControllerLarge@2x.png').default;
+
     widgetIconUrl(): string {
-        return require('./images/icon.png').default;
+        return require('./images/MenuController@2x.png').default;
     }
 
     widgetProperties(): TWWidgetProperties {
@@ -98,7 +104,12 @@ class BMMenuWidget extends TWComposerWidget {
     }
 
     renderHtml(): string {
-        return '<div class="widget-content BMMenu">Menu: Invisible at runtime</div>';
+        return '<div class="widget-content BMCodeHost">\
+            <div class="BMCodeHostContainer">\
+                <img src="' + this.largeIcon + '" class="BMMenuControllerIcon" />\
+                <div class="InlineBlock BMCHScriptEdit BMCHScriptEditReadonly" >Menu Controller</div>\
+            </div>\
+        </div>';
     };
 
     afterSetProperty(key: string, value: any): any {
