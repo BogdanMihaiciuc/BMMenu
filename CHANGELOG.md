@@ -1,6 +1,10 @@
 # 2.9.0
 
+This widget now has a proper icon and an updated appearance in the composer that matches the other Core UI controllers.
+
 Adds a new `submenuField` property that can be used to select the infotable field that represents the submenu for a menu item. The value of the submenu field must be an infotable with the same data shape as the base data infotable.
+
+Adds a new `classField` property that can be used to add custom classes to menu items.
 
 Adds a new `displayMode` property that can be used to control whether the menu appears as a desktop menu or a touch menu.
 
