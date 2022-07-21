@@ -80,6 +80,11 @@ export class BMMenuWidget extends TWRuntimeWidget {
     @TWProperty ('submenuField') submenuField: string;
 
     /**
+     * The field that represents a CSS class that should be added to the menu item.
+     */
+    @TWProperty ('classField') classField: string;
+
+    /**
      * Creates and returns a menu initialized with the values in the specified infotable.
      * @param menuInfotable         The infotable from which to create a menu.
      * @returns                     A menu, or `undefined` if a menu could not be created.
@@ -92,13 +97,19 @@ export class BMMenuWidget extends TWRuntimeWidget {
         // Recreate the menu whenever this infotable gets updated
         const items = menuInfotable.rows.map(e => {
             let submenu: BMMenu | undefined;
+            let CSSClass: string | undefined;
             
             // If the item has a submenu, create a menu for it
             if (e[this.submenuField]) {
                 submenu = this._menuWithInfotable(e[this.submenuField]);
             }
 
-            return BMMenuItem.menuItemWithName(e[this.nameField], {submenu})
+            // If the item has a custom class, apply it
+            CSSClass = e[this.classField];
+
+            const menuItem = BMMenuItem.menuItemWithName(e[this.nameField], {submenu});
+            menuItem.CSSClass = CSSClass;
+            return menuItem;
         });
 
         // Return undefined if the menu would be blacnk
