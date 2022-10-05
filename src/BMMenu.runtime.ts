@@ -57,7 +57,7 @@ export enum BMMenuWidgetTargetKind {
 }
 
 @ThingworxRuntimeWidget
-export class BMMenuWidget extends TWRuntimeWidget {
+export class BMMenuWidget extends TWRuntimeWidget implements BMMenuDelegate {
 
     /**
      * The data source kind to use.
@@ -421,6 +421,16 @@ export class BMMenuWidget extends TWRuntimeWidget {
             result = this.findWidgetNamed(named, {inWidget: child});
             if (result) return result;
         }
+    }
+
+    /**
+     * Invoked when a menu items is about to be selected. Prevents selection
+     * on menu items with submenus.
+     */
+    menuShouldSelectItem(_: BMMenu, item: BMMenuItem): boolean {
+        if (item.submenu) return NO;
+
+        return YES;
     }
 
     menuDidSelectItem(menu: BMMenu, item: BMMenuItem) {
