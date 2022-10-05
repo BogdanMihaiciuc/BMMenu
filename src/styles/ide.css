@@ -1,3 +1,10 @@
-.test {
-    whatever: 3;
+.BMMenuControllerIcon {
+	width: 32px;
+	height: 32px;
+	
+	display: block;
+	float: left;
+
+	position: relative;
+	left: -4px;
 }
